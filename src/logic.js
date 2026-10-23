@@ -861,6 +861,18 @@ const Logic = (() => {
     if (s.tech && s.tech.tech.type === 'tiro') return;
     if (b.owner) {
       syncBall(s, dt);
+      // Aunque regatees al portero, no puedes entrar andando con el balón en la portería: si llegas a la línea de gol
+      // (dentro del ancho de la portería) con el balón, el portero se lanza y te lo quita siempre. Para marcar hay que chutar.
+      const o = b.owner;
+      if (o.role !== 'POR' && !s.tech) {
+        const gk = s.players.find(p => p.role === 'POR' && p.team !== o.team), gy = oppGoalY(o.team);
+        if (gk && Math.abs(b.y - gy) < 1.6 && Math.abs(b.x - cx) < F.goalW / 2 + 0.8) {
+          gk.x = b.x; gk.y = gy + (gy < F.l / 2 ? 0.6 : -0.6); gk.stun = 0;
+          o.stun = 0.45; o.kickLock = 0.4; take(s, gk);
+          s.events.push({ type: 'msg', text: gk.team === 'A' ? TX('¡Tu portero se la queda!') : TX('¡El portero te la quita!') });
+          return;
+        }
+      }
       // Llevar el balón más allá de una línea = fuera (banda, puerta o córner). Ya no se puede rodear la portería por detrás.
       // Solo cuenta como gol si entras con él por la boca de la portería.
       if (b.y < 0 || b.y > F.l || b.x < 0 || b.x > F.w) {

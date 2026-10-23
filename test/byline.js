@@ -17,13 +17,13 @@ function run(x, y, mx, my, defenders) {
   A.filter(p => p !== me).forEach(p => { p.x = 30; p.y = 48; });
   Logic._t.take(s, me); s.controlledId = me.id; me.aim = Math.atan2(my, mx);
   const ev = []; let maxBehind = 0;
-  for (let i = 0; i < 240 && !ev.length; i++) {
+  for (let i = 0; i < 240 && !ev.length && !(s.ball.owner && s.ball.owner.role === 'POR'); i++) {
     Logic.update(s, { move: { x: mx, y: my }, sprint: true, shootHeld: false, pressed: new Set() }, 1 / 60);
     if (s.ball.owner === me) maxBehind = Math.min(maxBehind, s.ball.y);
     for (const e of s.events) if (e.type === 'goal' || e.type === 'setpiece') ev.push(e.type + (e.kind ? ':' + e.kind : '') + '@' + e.team);
     s.events.length = 0;
   }
-  return { ev: ev[0] || 'nada', score: s.score, maxBehind };
+  return { ev: ev[0] || 'nada', score: s.score, maxBehind, owner: s.ball.owner && s.ball.owner.role };
 }
 const side = cx + F.goalW / 2 + 3;
 let r = run(side, 3, 0, -1);
@@ -32,7 +32,9 @@ ok(r.maxBehind >= -0.01, 'el balón nunca llega a estar detrás de la línea con
 r = run(side, 3, -0.6, -1, true);
 ok(r.ev !== 'goal@A' && r.score.A === 0, 'ya no se puede rodear al portero por detrás para marcar (' + r.ev + ')');
 r = run(cx, 4, 0, -1);
-ok(r.ev === 'goal@A' && r.score.A === 1, 'entrar con el balón por la boca de la portería sí es gol (' + r.ev + ')');
+ok(r.ev !== 'goal@A' && r.score.A === 0 && r.owner === 'POR', 'entrar andando con el balón en la portería no vale: el portero se lo quita (' + r.ev + ', ' + r.owner + ')');
+r = run(cx + 4, 6, -0.5, -1, true);
+ok(r.ev !== 'goal@A' && r.score.A === 0, 'regatear hasta el portero: se lo quita (' + r.ev + ')');
 r = run(1, 30, -1, 0);
 ok(r.ev === 'setpiece:banda@B', 'salir por la banda con el balón = saque de banda del rival (' + r.ev + ')');
 r = run(17, 30, 0, -1);
