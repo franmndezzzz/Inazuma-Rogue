@@ -240,6 +240,19 @@ function giftPickOptions(f, n = 3) {
   const out = []; while (out.length < n && pool.length) out.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
   return out;
 }
+// Versiones del Infinito: las otras versiones de jugadores (del 2, del 3, nombres alienígenas…) que no salen en el gacha.
+// Se ganan al vencer a cada jefe del Infinito (elige 1 de 3) y llevan un marco propio con el símbolo ∞.
+(function markVersions() {
+  if (typeof GAME === 'undefined') return;
+  for (const p of GAME.players) if (p.cs && p.gacha === false && !p.halloween && !p.special && !p.original && p.id !== 39001) p.inf = true;
+})();
+const INF_TIERS = w => w >= 30 ? ['comun', 'rara', 'epica', 'legendaria'] : w >= 15 ? ['comun', 'rara', 'epica'] : ['comun', 'rara'];
+function versionPickOptions(wave, n = 3) {
+  const ok = INF_TIERS(wave), all = GAME.players.filter(p => p.inf && ok.includes(p.rarity));
+  const fresh = all.filter(p => !Profile.data.coll[p.id]), pool = (fresh.length >= n ? fresh : all).map(p => p.id);
+  const out = []; while (out.length < n && pool.length) out.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
+  return out;
+}
 const normCode = c => String(c || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
 
 const Profile = {
@@ -528,7 +541,11 @@ const Run = {
         }
       } else if (run.kind === 'infinite') {
         out.coins = 20 + run.index * 3 + goals * 5;
-        if (Run.isBoss(run)) out.tickets = 2;
+        if (Run.isBoss(run)) {
+          out.tickets = 2;
+          const opts = versionPickOptions(run.index + 1);
+          if (opts.length) { const uid = Date.now(); (P.giftPicks = P.giftPicks || []).push({ code: '∞', uid, opts, desc: TX('Jefe de la oleada {0} del Infinito: elige una versión', run.index + 1) }); out.versionPick = uid; }
+        }
         P.infBest = Math.max(P.infBest, run.index + 1);
       }
       if (finalMatch) { out.done = true; out.victory = true; run.state = 'over'; }

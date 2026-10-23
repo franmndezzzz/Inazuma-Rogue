@@ -513,6 +513,11 @@ details.tgroup .tracks{margin-top:8px}
 .pslot .pr{font-size:12px;background:var(--navy-d);border:1px solid var(--ink);padding:0 4px;color:var(--sky-t);margin-top:2px}
 .pslot .pn{font-size:12px;text-shadow:1px 1px 0 #000,-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ptile .slot{font-size:12px}
+/* Versiones del Infinito: marco turquesa y morado con el símbolo ∞ (en todas las rarezas) */
+.gcard.inf,.pcard.inf,.ptile.inf,.pslot.inf .pf{position:relative;box-shadow:0 0 0 2px #2fd0c8,0 0 0 4px #6a3ad8,0 0 10px rgba(80,220,210,.55)}
+.gcard.inf .pix,.ptile.inf .pix{background:linear-gradient(135deg,#1aa8a0,#5a2ab8)}
+.gcard.inf::after,.pcard.inf::after,.ptile.inf::after,.pslot.inf .pf::after{content:'∞';position:absolute;top:1px;right:3px;font:700 15px/1 var(--font-ui);color:#7ff5ee;text-shadow:0 0 4px #6a3ad8,1px 1px 0 #000;pointer-events:none}
+.hwpk.infpk{border-color:#2fd0c8;box-shadow:0 0 0 2px #6a3ad8}
 .opts.kitdz{display:grid;grid-template-columns:repeat(3,1fr)}
 .pslot .pe{display:block;line-height:1}.pslot .pe .chip{font-size:9px;padding:0 3px}
 .tmp{font-style:normal;font-size:12px;background:#7c4dd1;color:#fff;padding:0 3px}

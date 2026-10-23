@@ -147,7 +147,7 @@ const App = (() => {
     story: [TX('Historia'), TX('Recorre los torneos del 1, 2 y 3 con tu equipo. Es') + ' <b>' + TX('roguelite') + '</b>' + TX(': tienes vidas ♥, tras cada victoria eliges una mejora (técnica, habilidad o fichaje temporal) y todo eso se pierde al acabar el intento. Completar una etapa la deja superada para siempre y abre más modos.')],
     special: [TX('Equipos especiales'), TX('Un solo partido, sin segundas oportunidades. Si ganas,') + ' <b>' + TX('su estrella se une a tu plantilla') + '</b> ' + TX('(o sube una ★ si ya la tenías).')],
     chains: [TX('Cadenas'), TX('Varios partidos seguidos') + ' <b>' + TX('sin recuperar vidas') + '</b>' + TX('. Al completarla: Rayo Raimon, tickets, monedas y la estrella del último rival. La primera vez, una técnica legendaria. Sin perder vidas, 💎 extra. Medallas 🥉🥈🥇 al repetirlas.')],
-    infinite: [TX('Infinito'), TX('Oleadas de rivales cada vez más fuertes hasta que te quedes sin vidas. Cada 5 oleadas, un jefe. Intenta batir tu récord.')],
+    infinite: [TX('Infinito'), TX('Oleadas de rivales cada vez más fuertes hasta que te quedes sin vidas. Cada 5 oleadas, un jefe. Intenta batir tu récord.') + ' <b>' + TX('∞ Al ganar a cada jefe eliges una versión especial de un jugador (del 2, del 3…) que no sale en el gacha: cuanto más lejos llegues, más rara.') + '</b>'],
     gacha: [TX('Gacha'), TX('Gasta tickets para tirar: gira la manivela de la máquina y abre las cápsulas. Probabilidades: común 60 %, rara 28 %, épica 10 %, legendaria 2 % (cada 10 tiradas sin épica, la siguiente lo es seguro). Los repetidos suben estrellas a tu jugador.')],
     team: [TX('Plantilla'), '<b>' + TX('Mi equipo') + '</b>' + TX(': elige formación y quién juega (a portería solo porteros).') + ' <b>' + TX('Jugadores') + '</b>' + TX(': busca y entrena (monedas) o usa Rayos Raimon para subir estrellas.') + ' <b>' + TX('Técnicas') + '</b>' + TX(': equipa las supertécnicas.')],
     career: [TX('Modo Carrera'), TX('Eres el mánager de un instituto: 3 divisiones, Copa y playoffs. Cada semana haz una actividad (entrenar, ojear…), juega o simula el partido y ficha (también a jugadores del extranjero). Tus titulares') + ' <b>' + TX('suben o bajan') + '</b> ' + TX('según su rendimiento. Los jugadores se') + ' <b>' + TX('gradúan al acabar 6º curso') + '</b> ' + TX('y la cantera trae chavales nuevos. Cuida la fama: si llega a 0, cierran el club. Cada 3 temporadas,') + ' <b>' + TX('el Mundial') + '</b>.'],
@@ -269,7 +269,7 @@ const App = (() => {
     tutorial('gacha'); if (!$('tutq-gacha')) body.insertAdjacentHTML('beforeend', `<p class="note" id="tutq-gacha">${tutBtn('gacha')}</p>`);
   }
   // Legendarios de Halloween: marco naranja apagado, estilo miedo (clase .hw)
-  const hwc = pd => pd && pd.halloween ? ' hw' : '';
+  const hwc = pd => pd && pd.halloween ? ' hw' : pd && pd.inf ? ' inf' : '';   // marcos especiales: Halloween y versiones del Infinito
   // Carta de un resultado del gacha (jugador o técnica legendaria)
   function makeCard(r) {
     const c = document.createElement('div');
@@ -636,7 +636,7 @@ const App = (() => {
       <div class="pgrid" id="edList"></div>`;
     const redraw = () => { onChange && onChange(); teamEditor(box, t, onChange); };
     box.querySelector('#edPitch').appendChild(pitch(roles, t.ids.map((id, i) => id == null ? null :
-      { ref: Sprites.refOf(PLAYER(id)), name: PLAYER(id).name, rarity: PLAYER(id).rarity, halloween: PLAYER(id).halloween, elem: PLAYER(id).elem, badge: rate(id, roles[i]) }), t.sel, i => { t.sel = i; Sound.sfx('click'); teamEditor(box, t, onChange); }));
+      { ref: Sprites.refOf(PLAYER(id)), name: PLAYER(id).name, rarity: PLAYER(id).rarity, halloween: PLAYER(id).halloween, inf: PLAYER(id).inf, elem: PLAYER(id).elem, badge: rate(id, roles[i]) }), t.sel, i => { t.sel = i; Sound.sfx('click'); teamEditor(box, t, onChange); }));
     box.querySelector('#formSel').onchange = e => {   // al cambiar de formación se recolocan los mismos 5
       t.formation = e.target.value; const keep = t.ids.filter(x => x != null);
       t.ids = bestFor(FORMATIONS[t.formation].roles, keep.length === 5 ? keep : Profile.ids()); t.sel = 0; redraw();
@@ -955,6 +955,18 @@ const App = (() => {
     if (L.exclusive) {
       const x = L.exclusive, pd = PLAYER(x.id), c = miniCard(x.id, `<div class="slot">${x.isNew ? TX('¡Se une a tu plantilla!') : x.star ? TX('Sube a ') + x.star + TX(' estrellas') : '+' + x.coins + ' 🪙'}</div>`);
       $('excl').insertAdjacentHTML('beforeend', '<h3>' + TX('Premio del equipo especial') + '</h3>'); $('excl').appendChild(c);
+    }
+    // Jefe del Infinito: elige 1 de 3 versiones (si no eliges ahora, queda guardado en 🎁 Código de regalo)
+    const vi = L.versionPick != null ? (Profile.data.giftPicks || []).findIndex(g => g.uid === L.versionPick) : -1;
+    if (vi >= 0) {
+      $('excl').insertAdjacentHTML('beforeend', `<h3>∞ ${TX('Premio del jefe: elige una versión')}</h3><p class="note">${TX('Si no eliges ahora, la tienes en 🎁 Código de regalo.')}</p><div class="hwpick" id="vpick"></div>`);
+      Profile.data.giftPicks[vi].opts.forEach(id => {
+        const pd = PLAYER(id), b = document.createElement('button'); b.className = 'hwpk infpk';
+        b.appendChild(face(Sprites.refOf(pd), 72));
+        b.insertAdjacentHTML('beforeend', `<b>${esc(pd.full || pd.name)}</b><small>${rchip(pd.rarity)} ${RAB(pd.role)} ${chip(pd.elem)}</small>${Profile.data.coll[id] ? `<small>${TX('ya lo tienes (+1 ★)')}</small>` : ''}`);
+        b.onclick = () => { const i = Profile.data.giftPicks.findIndex(g => g.uid === L.versionPick); const x = i >= 0 && Profile.takePick(i, id); if (!x) return; Sound.sfx('reveal'); renderReveal([x], openRun, TX('¡Nueva versión!')); };
+        $('vpick').appendChild(b);
+      });
     }
     $('next').onclick = openRun;
   }
