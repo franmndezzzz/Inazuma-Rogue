@@ -226,7 +226,7 @@ const GIFT_CODES = {
   MURALLA:           { pick: { rarity: 'epica', role: 'DEF' }, coins: 500, desc: TX('Elige 1 de 3 defensas épicos o mejores') },
   CEREBRO:           { pick: { rarity: 'epica', role: 'MED' }, coins: 500, desc: TX('Elige 1 de 3 medios épicos o mejores') },
   GOLEADOR:          { pick: { rarity: 'epica', role: 'DEL' }, coins: 500, desc: TX('Elige 1 de 3 delanteros épicos o mejores') },
-  KANEINFINITO:      { player: 21567, desc: TX('Hurley Kane (versión del Infinito)') },
+  KANEINFINITO:      { player: 31223, desc: TX('Hurley Kane (versión del Infinito)') },
   LEANINFINITO:      { player: 1457, desc: TX('Lean (versión del Infinito)') },
   TORCHINFINITO:     { player: 31774, desc: TX('Torch (versión del Infinito)') },
   MERCURYINFINITO:   { player: 1415, desc: TX('Mercury (versión del Infinito)') },
