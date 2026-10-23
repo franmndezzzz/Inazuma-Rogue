@@ -768,6 +768,8 @@ const Logic = (() => {
       const opp = s.players.filter(q => q.team !== p.team).reduce((m, q) => Math.min(m, dist(q, b)), 99);
       if (dist(p, b) < opp) { moveTo(s, p, b.x, b.y, true); return; }
     }
+    // Un rival se mete con el balón en el área: el portero sale a por él
+    if (b.owner && b.owner.team !== p.team && inOwnBox(p.team, b.owner) && dist(p, b.owner) < 5) { moveTo(s, p, b.owner.x, b.owner.y, true); return; }
     // Cubre el ángulo: se pone entre el balón y el centro de la portería y sale un poco si el balón se acerca
     const bd = depthOf(p.team, b.y), out = clamp((14 - bd) * 0.12, 0, 1.4);
     moveTo(s, p, cx + clamp((b.x - cx) * 0.42, -half + 0.3, half - 0.3), homeY + attackDir(p.team) * out, false);
@@ -920,6 +922,13 @@ const Logic = (() => {
   function checkSteals(s, dt) {
     const h = s.ball.owner;
     if (!h || h.role === 'POR' || h.invuln > 0) return;
+    // Chocar con el portero en su área: se queda el balón (solo se le supera con un regate o una técnica)
+    const gk = s.players.find(q => q.role === 'POR' && q.team !== h.team);
+    if (gk && gk.stun <= 0 && inOwnBox(gk.team, h) && dist(gk, h) < 1.1) {
+      h.stun = 0.45; h.kickLock = 0.4; take(s, gk);
+      s.events.push({ type: 'msg', text: gk.team === 'A' ? TX('¡Tu portero se la queda!') : TX('¡El portero te la quita!') });
+      return;
+    }
     const hs = Math.hypot(h.vx, h.vy);
     for (const d of s.players) {
       if (d.team === h.team || d.stun > 0 || d.tackle || d.dash || dist(d, h) > 0.95) continue;

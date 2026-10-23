@@ -14,7 +14,8 @@ const shots = Object.values(ctx.GAME.techniques).filter(t => t.type === 'tiro').
 me.techs = shots.map(t => Object.assign({}, t, { cd: 10 })); me.cd = {};
 Logic._t.take(s, me); s.controlledId = me.id; me.y = 6; me.x = 17;
 console.log('elige al principio', Logic.contextTech(s, me).tech.name, '· opciones', Logic.techChoices(s, me));
-for (let i = 0; i < 400; i++) { if (s.ball.owner !== me) Logic._t.take(s, me); me.x = 17; me.y = 6; Logic.update(s, { move: { x: 0, y: 0 }, sprint: false, shootHeld: false, pressed: new Set(i === 399 ? ['techNext'] : []), dt: 1 / 60 }, 1 / 60); }
+const gkB = s.players.find(p => p.team === 'B' && p.role === 'POR');   // el portero, apartado (si no, se queda el balón al tocarte)
+for (let i = 0; i < 400; i++) { if (s.ball.owner !== me) Logic._t.take(s, me); me.x = 17; me.y = 6; gkB.x = 3; gkB.y = 1; gkB.stun = 1; Logic.update(s, { move: { x: 0, y: 0 }, sprint: false, shootHeld: false, pressed: new Set(i === 399 ? ['techNext'] : []), dt: 1 / 60 }, 1 / 60); }
 const picked = Logic.contextTech(s, me).tech; console.log('tras ⇄', picked.name, picked.id, me.techs.map(t => t.id + ':' + t.name).join(' | '), 'pick', JSON.stringify(me.techPick || null), 'fase', s.phase, s.kickoff ? 'kickoff' : '');
 Logic._t.startTech(s, me, picked, 0);
 const other = me.techs.find(t => t.id !== picked.id);

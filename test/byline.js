@@ -37,5 +37,7 @@ r = run(1, 30, -1, 0);
 ok(r.ev === 'setpiece:banda@B', 'salir por la banda con el balón = saque de banda del rival (' + r.ev + ')');
 r = run(17, 30, 0, -1);
 ok(r.ev === 'nada' || /goal|puerta|corner/.test(r.ev), 'conducir por el campo no da falsos fueras (' + r.ev + ')');
+r = run(cx, 8, 0, -1, true);
+ok(r.ev !== 'goal@A' && r.score.A === 0, 'correr con el balón contra el portero: te la quita y no hay gol (' + r.ev + ')');
 console.log(fails ? '\n✗ ' + fails + ' fallos' : '\n✓ Todo bien');
 process.exit(fails ? 1 : 0);
