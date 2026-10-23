@@ -281,6 +281,8 @@ const Profile = {
     for (const k of ['s3', 's4']) this.data.story[k] = this.data.story[k] || { best: 0, done: false };
     // Cambios de id entre versiones (p. ej. Raimon del 1 en su versión base): se conserva lo que tenías
     for (const [o, n] of Object.entries(GAME.idmap || {})) {
+      // Las versiones del Infinito usan esos ids «viejos»: son jugadores de verdad y NO se convierten (antes desaparecían al recargar)
+      if (PLAYER(o) && PLAYER(o).inf) continue;
       const c = this.data.coll;
       if (c[o]) { if (!c[n]) c[n] = c[o]; else c[n].stars = Math.max(c[n].stars, c[o].stars); delete c[o]; }
     }
