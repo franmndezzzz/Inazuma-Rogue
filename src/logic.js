@@ -571,7 +571,7 @@ const Logic = (() => {
       let open = 99;
       for (const o of s.players) if (o.team !== p.team) open = Math.min(open, dist(o, m));
       const sc = Math.min(open, 8) + (depthOf(p.team, m.y) - depthOf(p.team, p.y)) * 0.25;
-      if (sc > bs) { bs = sc; best = m; }
+      if (sc > bs) { bs = sc; best = m; best.open = open; }
     }
     return best;
   }
@@ -710,7 +710,7 @@ const Logic = (() => {
       // Tiro normal: solo con una buena ocasión (o si está encima de la portería)
       // La IA también carga el tiro: se para un momento (se ve la barra) y chuta con fuerza
       if ((d < (rival ? s.diff.shootRange : 14) && goodAngle && clear && rnd() < 0.35 + 0.65 * smart) || d < 6.5) {
-        aimGoal(); p.windup = { t: d < 6.5 ? 0.22 : 0.38 + rnd() * 0.2, c: 0.3 + rnd() * 0.2, aimX }; return;
+        aimGoal(); p.windup = { t: d < 6.5 ? 0.22 : 0.38 + rnd() * 0.2, c: 0.55 + rnd() * 0.3, aimX }; return;
       }
       if (!s.tech && dribT && nd < 2.4 && rnd() < s.diff.techUse) { startTech(s, p, dribT, 0); return; }
       const m = bestPassTarget(s, p), mine = Math.min(nd, 7);
@@ -740,7 +740,18 @@ const Logic = (() => {
     const homeY = ownGoalY(p.team) + attackDir(p.team) * 1.2;
     if (b.owner === p) {
       p.dvx = p.dvy = 0; p.holdT += dt;
-      if (p.holdT > 1.1) { const m = openMate(s, p); if (m) pass(s, p, 'strong', { x: m.x - p.x, y: m.y - p.y }); else p.holdT = 0.5; }
+      if (p.holdT > 1.1) {
+        // Solo pasa en corto a un compañero libre y con la línea limpia; si no, despeja en largo hacia el lado con menos rivales
+        // (antes pasaba al defensa que tenía un delantero al lado, o directamente a los pies del rival)
+        const m = openMate(s, p), safe = m && m.open >= 4.5 && laneBlock(s, p, m.x, m.y, 1.4, false) === 0;
+        if (safe) pass(s, p, 'strong', { x: m.x - p.x, y: m.y - p.y });
+        else {
+          const foes = s.players.filter(o => o.team !== p.team && o.role !== 'POR');
+          const left = foes.filter(o => o.x < cx).length, right = foes.length - left;
+          const sx = left === right ? (rnd() < 0.5 ? -1 : 1) : left < right ? -1 : 1;
+          clearance(s, p, { x: sx * (0.18 + rnd() * 0.17), y: attackDir(p.team) });
+        }
+      }
       return;
     }
     if (b.shot && !b.shot.resolved && b.shot.team !== p.team) {
@@ -789,7 +800,9 @@ const Logic = (() => {
     const chance = clamp(1 / (1 + Math.exp(edge / 14)), 0.04, 0.96);
     if (rnd() < chance) {
       if (edge < -14 && !shot.tech) { take(s, g); s.events.push({ type: 'catch', team: g.team, tech: !!gt }); return; }
-      b.vy = -b.vy * 0.3; b.vx = (rnd() - 0.5) * 10; b.vz = 3; b.shot = null; b.fire = null; b.lastTeam = g.team;
+      // Despeje a un lado, lejos del punto de penalti (antes el rechace caía flojo delante y el delantero lo cazaba siempre)
+      const side = Math.abs(b.x - cx) > 0.4 ? Math.sign(b.x - cx) : (rnd() < 0.5 ? -1 : 1);
+      b.vx = side * (7 + rnd() * 5); b.vy = attackDir(g.team) * (1.5 + rnd() * 2.5); b.vz = 4; b.shot = null; b.fire = null; b.lastTeam = g.team;
       g.kickLock = 0.5;
       s.events.push({ type: 'save', team: g.team, x: b.x, y: b.y, big: !!shot.tech || !!gt, elem: gt ? gt.elem : null, name: gt ? gt.name : null });
       if (gt || shot.tech) s.hitstop = 0.22;
