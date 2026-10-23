@@ -17,7 +17,7 @@ const stars = n => `<span class="stars">${'★'.repeat(n)}<s>${'★'.repeat(MAX_
 const TYPE_ICON = { tiro: '⚽', regate: '💨', bloqueo: '🛡️', parada: '✋' };
 const techLine = t => `<span class="tline">${chip(t.elem)}<b>${esc(t.name)}</b><i>${TYPE_LABEL[t.type] || ''} · ${t.power}</i></span>`;
 
-const VERSION = '0.31.10';
+const VERSION = '0.31.11';
 const DISCORD_URL = 'https://discord.gg/G6SyT2rZW', DISCORD_GIFT = 10;   // servidor de la comunidad (lo hizo un colega de Fran)
 const BETA = false;   // solo la beta privada (artefacto) lo pone a true: ahí está el modo desarrollador
 const App = (() => {
@@ -1961,6 +1961,8 @@ const App = (() => {
   }
   /* ---------- Novedades: notas de cada actualización (las más nuevas arriba) ---------- */
   const NEWS = [
+    { v: '0.31.11', date: '23/10/2026', items: [
+      TX('📱 Ajustes → Controles → «Colocar los botones a tu gusto»: en el móvil puedes mover cada botón a donde quieras y cambiar su tamaño.')] },
     { v: '0.31.10', date: '23/10/2026', items: [
       TX('∞ Infinito: al ganar a cada jefe eliges 1 de 3 versiones especiales de jugadores que no salen en el gacha (del 2, del 3…). Cuanto más lejos llegues, más raras. Llevan su propio marco ∞.'),
       TX('Porteros: salen a por el que entra con el balón en el área, y ya no se puede entrar andando con el balón en la portería. Para marcar, hay que chutar.')] },
@@ -2041,6 +2043,39 @@ const App = (() => {
   }
 
   /* ---------- Sonido ---------- */
+  // Editor de los botones del móvil: arrastra cada botón y cambia su tamaño (se guarda en settings.padLayout)
+  function padEditor(done) {
+    const BTN = [['s4', TX('Saque largo')], ['big', TX('Tiro / Entrada')], ['s2', TX('Pase')], ['s3', TX('Técnica')], ['s5', TX('Regate / Cambiar')], ['s6', '⇄']];   // Saque largo (solo portero) va debajo de Regate
+    const L = JSON.parse(JSON.stringify(settings.padLayout || {}));
+    let sel = 'big';
+    const ov = document.createElement('div'); ov.id = 'padEdit';
+    ov.innerHTML = `<div class="pehead"><b>${TX('Arrastra cada botón a donde quieras. Toca uno para cambiar su tamaño.')}</b>
+      <div class="row"><span id="peName"></span><input type="range" id="peSize" min="70" max="150" step="5"><b id="peVal"></b></div>
+      <div class="row"><button class="ghost" id="peReset">${TX('Como venía')}</button><button class="ghost" id="peCancel">${TX('Cancelar')}</button><button class="cta" id="peOk">${TX('Guardar')}</button></div></div>
+      <div class="pejoy">${TX('El joystick sale donde pongas el dedo (mitad izquierda)')}</div><div class="padbox" id="peBox"></div>`;
+    document.getElementById('shell').appendChild(ov);
+    const box = ov.querySelector('#peBox'), k = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--padk')) || 1;
+    box.style.right = getComputedStyle($('pad')).right; box.style.bottom = getComputedStyle($('pad')).bottom;
+    const els = {};
+    const paint = key => { const el = els[key], v = L[key] || {}; el.style.translate = `${v.x || 0}px ${v.y || 0}px`; el.style.scale = String(v.s || 1); };
+    const pick = key => { sel = key; Object.entries(els).forEach(([kk, el]) => el.classList.toggle('pesel', kk === key)); const v = L[key] || {};
+      ov.querySelector('#peName').textContent = BTN.find(b => b[0] === key)[1] + ':'; ov.querySelector('#peSize').value = Math.round((v.s || 1) * 100); ov.querySelector('#peVal').textContent = Math.round((v.s || 1) * 100) + ' %'; };
+    BTN.forEach(([key, name]) => {
+      const el = document.createElement('button'); el.className = 'act ' + key + (key === 's3' ? ' fire' : ''); el.innerHTML = name.replace(' / ', '<br>'); box.appendChild(el); els[key] = el; paint(key);
+      let drag = null;
+      el.addEventListener('pointerdown', e => { e.preventDefault(); pick(key); const v = L[key] || {}; drag = { id: e.pointerId, sx: e.clientX, sy: e.clientY, x: v.x || 0, y: v.y || 0 }; try { el.setPointerCapture(e.pointerId); } catch (_) {} });
+      el.addEventListener('pointermove', e => { if (!drag || e.pointerId !== drag.id) return;
+        const v = L[key] = Object.assign({ s: 1 }, L[key]); v.x = Math.round(Math.max(-320, Math.min(60, drag.x + (e.clientX - drag.sx) / k))); v.y = Math.round(Math.max(-560, Math.min(40, drag.y + (e.clientY - drag.sy) / k))); paint(key); });
+      const end = () => { drag = null; }; el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end);
+    });
+    pick('big');
+    ov.querySelector('.pehead').insertAdjacentHTML('beforeend', `<small>${TX('«Saque largo» solo sale con el portero: está debajo de «Regate», mueve Regate para verlo.')}</small>`);
+    ov.querySelector('#peSize').oninput = e => { const v = L[sel] = Object.assign({ x: 0, y: 0 }, L[sel]); v.s = +e.target.value / 100; ov.querySelector('#peVal').textContent = e.target.value + ' %'; paint(sel); };
+    ov.querySelector('#peReset').onclick = () => { for (const kk in L) delete L[kk]; Object.keys(els).forEach(paint); pick(sel); Sound.sfx('click'); };
+    const close = save => { if (save) { settings.padLayout = Object.keys(L).length ? L : undefined; saveSettings(); Pad.refresh(); UI.toast(TX('Botones guardados'), 1400); } ov.remove(); done && done(); };
+    ov.querySelector('#peCancel').onclick = () => close(false);
+    ov.querySelector('#peOk').onclick = () => { Sound.sfx('reveal'); close(true); };
+  }
   function renderSettings() {
     const c = Sound.cfg;
     const keys = Object.keys(TRACKS);
@@ -2063,6 +2098,7 @@ const App = (() => {
       <h3>${TX('Controles')}</h3>
       ${opts(TX('Botones en pantalla'), 'controls', [['auto', TX('Auto')], ['tactil', TX('Siempre')], ['teclado', TX('Nunca (PC)')]])}
       ${opts(TX('Tamaño de los botones (móvil)'), 'padSize', [['pequeno', TX('Pequeños')], ['normal', TX('Normales')], ['grande', TX('Grandes')]], Object.assign({ padSize: 'normal' }, settings))}
+      <button class="ghost" id="sPadEd">${TX('📱 Colocar los botones a tu gusto')}</button>
       ${opts(TX('Teclas del ordenador'), 'keys', [['nuevas', TX('Nuevas (K tiro)')], ['clasicas', TX('Clásicas (L tiro)')], ['custom', TX('A tu gusto')]], Object.assign({ keys: 'nuevas' }, settings))}
       ${settings.keys === 'custom' ? keyMapHtml() : ''}
       <button class="ghost" id="sGuide">${TX('🎮 Guía de controles')}</button>
@@ -2085,6 +2121,7 @@ const App = (() => {
       <button class="ghost" id="stopAll">${TX('Parar')}</button>
       ${settings.dev ? '<button class="ghost" id="toDev">' + TX('🛠 Modo desarrollador') + '</button>' : ''}
       <p class="note">${TX('Inazuma Rogue v')}${VERSION} ${TX('· fan game gratuito y no oficial. Inazuma Eleven es de Level-5.')}</p>`);
+    $('sPadEd').onclick = () => padEditor(() => { const yy = $('screen').scrollTop; renderSettings(); $('screen').scrollTop = yy; });
     bindOpts(settings, k => { saveSettings(); if (k === 'controls' || k === 'padSize') Controls.apply(); if (k === 'keys') { const y = $('screen').scrollTop; renderSettings(); $('screen').scrollTop = y; } });
     body.querySelectorAll('[data-lang]').forEach(b => b.onclick = () => {
       if (b.dataset.lang === I18N.lang) return;

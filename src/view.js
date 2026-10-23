@@ -237,6 +237,7 @@ const Pad = (() => {
     SETS[m].forEach(b => {
       const el = document.createElement('button');
       el.className = 'act ' + b.cls;
+      applyLayout(el, b.cls.split(' ')[0]);   // posición y tamaño a tu gusto (Ajustes → Colocar los botones)
       el.innerHTML = (b.tech ? `<span class="tt">${b.label}</span>` : b.label) + (b.sub ? `<small>${b.sub}</small>` : '') + (b.tech ? '<small class="tn"></small>' : '');
       el.addEventListener('pointerdown', e => {
         e.preventDefault(); el.classList.add('down'); down.add(e.pointerId);
@@ -276,8 +277,15 @@ const Pad = (() => {
     dribBtn.style.setProperty('--cd', (k / 30).toFixed(2)); dribBtn.classList.toggle('cool', k > 0);
   }
   addEventListener('pointerup', e => down.delete(e.pointerId)); addEventListener('pointercancel', e => down.delete(e.pointerId));
+  // Botones colocados a tu gusto: settings.padLayout = { big: { x, y, s }, s2: …, s3, s4, s5, s6 } (desplazamiento en px y tamaño)
+  function applyLayout(el, key) {
+    let L = null; try { L = (App.settings.padLayout || {})[key]; } catch (_) {}
+    el.style.translate = L && (L.x || L.y) ? `${L.x || 0}px ${L.y || 0}px` : '';
+    el.style.scale = L && L.s && L.s !== 1 ? String(L.s) : '';
+  }
+  function refresh() { mode = null; }
   function show(on) { if (!on) down.clear(); pad.hidden = !on; document.getElementById('stick').hidden = !on; kh.hidden = !on; }
-  return { render, setTech, setDribble, setChoices, show };
+  return { render, setTech, setDribble, setChoices, show, refresh, applyLayout };
 })();
 
 /* =====================================================================

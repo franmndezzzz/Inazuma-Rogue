@@ -65,7 +65,7 @@ img,.pix,.crest{image-rendering:pixelated}
 #stick.sprint{border-color:rgba(255,160,60,.75)}
 
 /* Botones en arco alrededor de Tiro (a mano del pulgar derecho y lejos del joystick): Pase y Regate/Cambiar suben en diagonal */
-#pad{position:absolute;z-index:3;width:240px;height:240px;transform:scale(var(--padk,1));transform-origin:100% 100%;
+#pad,.padbox{position:absolute;z-index:3;width:240px;height:240px;transform:scale(var(--padk,1));transform-origin:100% 100%;
   right:max(14px,env(safe-area-inset-right,0px));bottom:calc(env(safe-area-inset-bottom,0px) + 22px)}
 .act{position:absolute;border-radius:50%;border:2px solid rgba(236,242,255,.85);box-shadow:inset 0 0 0 2px rgba(10,18,40,.8),0 2px 0 rgba(0,0,0,.35);
   background:radial-gradient(circle at 50% 35%,rgba(70,108,180,.86),rgba(30,52,110,.86));color:var(--chalk);
@@ -88,6 +88,14 @@ img,.pix,.crest{image-rendering:pixelated}
 .act.fire::after{content:"";position:absolute;inset:0;border-radius:50%;pointer-events:none;
   background:conic-gradient(rgba(0,0,0,.62) calc(var(--cd,0) * 360deg),transparent 0)}
 .act.off{opacity:.35}
+/* Editor para colocar los botones del móvil */
+#padEdit{position:fixed;inset:0;z-index:70;background:#1d4a22 repeating-linear-gradient(90deg,#3f8f3a 0 40px,#479c41 40px 80px);touch-action:none}
+#padEdit .pehead{position:absolute;left:0;right:0;top:0;padding:calc(env(safe-area-inset-top,0px) + 8px) 12px 8px;background:rgba(24,32,65,.92);border-bottom:2px solid var(--ink);display:flex;flex-direction:column;gap:6px;color:var(--chalk);font:14px var(--font-ui)}
+#padEdit .pehead .row{display:flex;gap:6px;align-items:center;flex-wrap:wrap}#padEdit .pehead .ghost,#padEdit .pehead .cta{padding:6px 10px;font-size:15px;width:auto}
+#padEdit .pehead input[type=range]{flex:1;min-width:120px}
+#padEdit .act.pesel{box-shadow:0 0 0 3px var(--yellow),inset 0 0 0 2px rgba(10,18,40,.8)}
+#padEdit .pejoy{position:absolute;left:max(22px,env(safe-area-inset-left,0px));bottom:calc(env(safe-area-inset-bottom,0px) + 30px);width:100px;height:100px;border-radius:50%;border:2px dashed rgba(242,246,236,.7);display:flex;align-items:center;justify-content:center;text-align:center;font:11px var(--font-ui);color:#fff;padding:8px;box-sizing:border-box;background:rgba(8,18,12,.3)}
+
 .tutbox{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:16px}
 .tutin{max-width:360px;background:var(--navy);border:3px solid var(--ink);box-shadow:0 0 0 3px var(--yellow);padding:14px;display:flex;flex-direction:column;gap:10px;color:var(--chalk)}
 .tutin p{font-size:15px;line-height:1.4;margin:0}
