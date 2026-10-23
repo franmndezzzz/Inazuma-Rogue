@@ -852,7 +852,7 @@ const App = (() => {
     api.running = false;
     setTimeout(() => {
       Sound.stop(0.6);
-      setTimeout(() => { try { Cloud.flush(); } catch (_) {} }, 2000);   // al acabar el partido se sube ya lo pendiente a la nube
+      setTimeout(() => { try { Cloud.flushOld(); } catch (_) {} }, 2000);   // al acabar el partido se sube lo pendiente si hace rato de la última subida
       // Halloween: caramelos por jugar en cualquier modo (+5, +10 más si ganas)
       const candy = s.quit ? 0 : Halloween.matchPlayed(s.score.A > s.score.B);
       if (candy && api.mode !== 'hwboss') setTimeout(() => UI.toast('+' + candy + ' 🍬 ' + TX('caramelos de Halloween'), 2200), 500);

@@ -34,7 +34,8 @@ function makeFirebase() {
   function GoogleAuthProvider() { this.setCustomParameters = () => {}; }
   function makeDb(auth) {
     const docRef = id => ({ id,
-      async get() { if (server.down) fail('unavailable'); check(id, 'read'); const d = server.saves[id]; return snap(d); } });
+      async get() { if (server.down) fail('unavailable'); if (server.quota) fail('resource-exhausted'); check(id, 'read'); server.reads = (server.reads || 0) + 1; const d = server.saves[id]; return snap(d); },
+      async set(v) { if (server.down) fail('unavailable'); if (server.quota) fail('resource-exhausted'); check(id, 'write', v); server.writes++; server.saves[id] = JSON.parse(JSON.stringify(Object.assign({}, v, { updatedAt: Date.now() }))); } });
     const snap = d => ({ exists: !!d, data: () => d ? JSON.parse(JSON.stringify(Object.assign({}, d, { updatedAt: undefined }))) && Object.assign({}, JSON.parse(JSON.stringify(d)), { updatedAt: { toDate: () => new Date(d.updatedAt) } }) : undefined });
     function check(id, op, next) {
       const u = auth.currentUser; if (!u || u.uid !== id) fail('permission-denied');
@@ -236,7 +237,7 @@ const cloudTickets = d => JSON.parse(cloudOf(d).data['inazuma-perfil']).tickets;
   console.log('20. Muchos guardados seguidos = una sola subida (ahorra cuota de Firebase)');
   let W = device(); W.play({ coll: { 7: { stars: 1 } }, tickets: 1 }); await W.C.signUp('ahorro', 'secreto1'); await W.C.sync();
   const w0 = server.writes;
-  for (let i = 2; i <= 8; i++) { W.play({ tickets: i }); await new Promise(r => setTimeout(r, 400)); }   // 7 guardados en ~3 s
+  for (let i = 2; i <= 8; i++) { W.play({ tickets: i }); await new Promise(r => setTimeout(r, 100)); }   // 7 guardados seguidos (en menos de los 3 s del temporizador)
   await new Promise(r => setTimeout(r, 3400));
   ok(server.writes - w0 === 1 && cloudTickets(W) === 8, '7 guardados → 1 subida con lo último (' + (server.writes - w0) + ')');
 
@@ -267,6 +268,23 @@ const cloudTickets = d => JSON.parse(cloudOf(d).data['inazuma-perfil']).tickets;
   ok(server.writes - w2 === 1, 'flush sube lo pendiente');
   W.C.flush(); await new Promise(r => setTimeout(r, 400));
   ok(server.writes - w2 === 1, 'sin nada pendiente, flush no gasta otra subida');
+
+  console.log('25. Ahorro: subir no lee la nube antes, y al acabar un partido solo sube si hace rato de la última subida');
+  const r0 = server.reads || 0, w3 = server.writes; W.play({ tickets: 10 }); W.C.flush(); await new Promise(r => setTimeout(r, 300));
+  ok(server.writes - w3 === 1 && (server.reads || 0) === r0, 'una subida = 1 escritura y 0 lecturas');
+  W.play({ tickets: 11 }); W.C.flushOld(); await new Promise(r => setTimeout(r, 300));
+  ok(server.writes - w3 === 1, 'flushOld justo después de subir: espera al temporizador');
+  await new Promise(r => setTimeout(r, 3300));
+  ok(server.writes - w3 === 2, 'y el temporizador lo sube');
+
+  console.log('26. Una subida que se quedó colgada sin conexión y llegó más tarde no se toma por «otra partida»');
+  server.quota = false; let Y = device(); Y.play({ coll: { 9: { stars: 1 } }, tickets: 1 }); await Y.C.signUp('colgada', 'secreto1'); await Y.C.sync();
+  const yid = Y.C._meta().uid, late = JSON.parse(JSON.stringify(server.saves[yid])); late.rev = server.saves[yid].rev + 1; late.dev = Y.C._meta().dev;   // la nube va una versión por delante, puesta por este móvil
+  late.data = { 'inazuma-perfil': JSON.stringify({ firstDone: true, coll: { 9: { stars: 1 } }, tickets: 2 }) }; server.saves[yid] = late;
+  Y.play({ tickets: 3 });
+  ok(await Y.C.push(true) === 'uploaded' && !Y.C.state.conflict && server.saves[yid].rev === late.rev + 1, 'se sube encima sin preguntar');
+  let Z = device(); await Z.C.signIn('colgada', 'secreto1'); Z.play({ coll: { 9: { stars: 1 } }, tickets: 99 });
+  const zr = await Z.C.sync(); ok(zr === 'conflict' || zr === 'downloaded', 'otro móvil de verdad sí cuenta como otra partida (' + zr + ')');
 
   console.log(fails ? `\n${fails} FALLOS` : '\nTodo bien');
   process.exit(fails ? 1 : 0);
