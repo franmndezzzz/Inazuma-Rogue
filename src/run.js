@@ -627,7 +627,17 @@ const Run = {
     if (cur >= 0) run.lineup[cur] = run.lineup[slot];
     run.lineup[slot] = rosterIdx;
   },
-  save(run) { try { localStorage.setItem('inazuma-run3', JSON.stringify(run)); } catch (_) {} },
-  load() { try { return JSON.parse(localStorage.getItem('inazuma-run3') || 'null'); } catch (_) { return null; } },
-  clear() { try { localStorage.removeItem('inazuma-run3'); } catch (_) {} },
+  // Una partida en curso por modo (Historia, especial, cadena, Infinito), todas a la vez: { kind: run }.
+  // (Antes solo se guardaba una; si la clave tiene una partida suelta, se convierte.)
+  all() {
+    let o = null; try { o = JSON.parse(localStorage.getItem('inazuma-run3') || 'null'); } catch (_) {}
+    if (!o || typeof o !== 'object') return {};
+    if (o.kind) return o.roster ? { [o.kind]: o } : {};
+    for (const k in o) if (!o[k] || !o[k].roster || !o[k].kind || o[k].state === 'over') delete o[k];
+    return o;
+  },
+  write(all) { try { if (Object.keys(all).length) localStorage.setItem('inazuma-run3', JSON.stringify(all)); else localStorage.removeItem('inazuma-run3'); } catch (_) {} },
+  save(run) { const all = Run.all(); all[run.kind] = run; Run.write(all); },
+  load(kind) { return Run.all()[kind] || null; },
+  clear(kind) { if (kind == null) return Run.write({}); const all = Run.all(); delete all[kind]; Run.write(all); },
 };

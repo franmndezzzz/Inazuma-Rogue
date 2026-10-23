@@ -32,7 +32,7 @@ const App = (() => {
   Profile.load();
   Halloween.forced = Halloween.forced || !!settings.hwForce;   // la beta lo trae encendido de serie
 
-  const api = { match: null, matchSheet: null, running: false, scene: null, mode: null, run: Run.load(), settings, pick: null, draft: null };
+  const api = { match: null, matchSheet: null, running: false, scene: null, mode: null, run: null, settings, pick: null, draft: null };
   const body = $('screenBody');
   api.inMatch = () => api.running;
 
@@ -84,11 +84,11 @@ const App = (() => {
     if (Cloud.state.conflict) return renderConflict(renderMenu);
     let traida = false; try { traida = !!localStorage.getItem('inazuma-traida'); if (traida) localStorage.removeItem('inazuma-traida'); } catch (_) {}
     if (traida) { setTimeout(() => UI.toast(Cloud.enabled() && !Cloud.loggedIn() ? TX('¡Partida traída! Crea una cuenta en 👤 Cuenta para tenerla siempre a salvo') : TX('¡Partida traída!'), 3500), 300); }
-    const P = Profile.data, r = api.run && api.run.state !== 'over' ? api.run : null;
+    const P = Profile.data, runs = Run.all(), RUN_ORDER = ['story', 'special', 'chain', 'infinite'], open = RUN_ORDER.filter(k => runs[k]).map(k => runs[k]);
     const done = P.story.s1.done;
     screen(`<div class="title"><img class="logo" id="logo" src="ui/logo_rogue.png" alt="Inazuma Rogue"><span>${TX('5 contra 5 · roguelite')}</span></div>${wallet()}
       ${Halloween.active() ? hwMenuBtn() : ''}
-      ${r ? `<button class="cta" id="mContinue">${TX('Continuar:')} ${esc(r.name)}<small>${TX('Partido')} ${r.index + 1}${r.kind === 'infinite' ? '' : TX(' de ') + r.schedule.length} · ${'♥'.repeat(r.lives)}</small></button>` : ''}
+      ${open.map(r => `<button class="cta" data-cont="${r.kind}">${TX('Continuar:')} ${esc(r.name)}<small>${TX('Partido')} ${r.index + 1}${r.kind === 'infinite' ? '' : TX(' de ') + r.schedule.length} · ${'♥'.repeat(r.lives)}</small></button>`).join('')}
       <div class="modes">
         <button class="mode" id="mCareer"><span class="cicon">🏆</span><span class="mt"><b>${TX('Modo Carrera')}</b><small>${Career.data && !Career.data.over ? TX('Temporada ') + Career.data.season + ' · ' + DIV_NAME[Career.myDiv()] + TX(' · semana ') + Career.data.week : TX('Eres el mánager: 3 divisiones y ascensos')}</small></span></button>
         <button class="mode" id="mStory">${Sprites.crest(1)}<span class="mt"><b>${TX('Historia')}</b><small>${P.story.s4.done ? TX('Etapas 1, 2 y 3 completadas ✓') : P.story.s3.done ? TX('Etapa 3 · Fase 2 abierta (mejor: ') + P.story.s4.best + ')' : P.story.s2.done ? TX('Etapa 3 abierta: el Inazuma 3') : done ? TX('Etapa 1 ✓ · Etapa 2 abierta (mejor: ') + P.story.s2.best + ')' : TX('Etapa 1 · mejor: ') + P.story.s1.best + TX(' victorias')}</small></span></button>
@@ -107,7 +107,7 @@ const App = (() => {
       <button class="ghost discordbtn" id="mDiscord">${P.discordGift ? TX('💬 Únete al Discord de la comunidad') : TX('💬 Únete al Discord · +10 tickets 🎟️')}</button>
       <div data-cloudline>${cloudLine()}</div>
       ${Controls.pc() ? `<p class="note gpnote">${TX('🎮 ¿Tienes mando? Conéctalo y juega: Xbox, PlayStation o genérico.')} <small>${TX('Los botones están en Ajustes.')}</small></p>` : ''}
-      ${r ? '<button class="ghost" id="mAbandon">' + TX('Abandonar partida en curso') + '</button>' : ''}
+      ${open.map(r => `<button class="ghost" data-aband="${r.kind}">${TX('Abandonar:')} ${esc(r.name)}</button>`).join('')}
       <button class="ver" id="ver">v${VERSION}${settings.dev ? TX(' · dev') : ''}</button>`, 'bg_title');
     let vt = 0, vtT = 0;   // 20 toques seguidos en la versión: modo desarrollador
     $('ver').onclick = () => {
@@ -116,13 +116,18 @@ const App = (() => {
       if (vt >= 20) { vt = 0; if (!settings.dev) { settings.dev = true; settings.devWin = 1; saveSettings(); UI.toast(TX('Modo desarrollador activado'), 1800); } Sound.sfx('reveal'); renderDev(); }
       else if (vt >= 15) UI.toast(TX('Faltan ') + (20 - vt) + TX(' toques…'), 600);
     };
-    const busy = () => { if (r) { UI.toast(TX('Termina o abandona la partida en curso')); return true; } return false; };
-    if (r) { $('mContinue').onclick = openRun; $('mAbandon').onclick = () => { Run.clear(); api.run = null; renderMenu(); }; }
-    $('mStory').onclick = () => { if (!busy()) renderStory(); };
+    // Cada modo guarda su partida: si ya tienes una de ese modo, el botón la continúa (puedes tener varias a la vez)
+    const resume = k => { if (!runs[k]) return false; api.run = runs[k]; openRun(); return true; };
+    body.querySelectorAll('[data-cont]').forEach(b => b.onclick = () => resume(b.dataset.cont));
+    body.querySelectorAll('[data-aband]').forEach(b => b.onclick = () => {
+      if (!b.dataset.sure) { b.dataset.sure = 1; b.textContent = TX('¿Seguro? Toca otra vez para abandonar'); return; }
+      Run.clear(b.dataset.aband); if (api.run && api.run.kind === b.dataset.aband) api.run = null; renderMenu();
+    });
+    $('mStory').onclick = () => { if (!resume('story')) renderStory(); };
     $('mCareer').onclick = () => renderCareer();
-    $('mSpecial').onclick = () => { if (!busy()) renderSpecials(); };
-    $('mChain').onclick = () => { if (!done) return UI.toast(TX('Completa la Etapa 1 de la Historia')); if (!busy()) renderChains(); };
-    $('mInf').onclick = () => { if (!done) return UI.toast(TX('Completa la Etapa 1 de la Historia')); if (!busy()) { newDraft('infinite', {}); tutorial('infinite'); } };
+    $('mSpecial').onclick = () => { if (!resume('special')) renderSpecials(); };
+    $('mChain').onclick = () => { if (!done) return UI.toast(TX('Completa la Etapa 1 de la Historia')); if (!resume('chain')) renderChains(); };
+    $('mInf').onclick = () => { if (!done) return UI.toast(TX('Completa la Etapa 1 de la Historia')); if (!resume('infinite')) { newDraft('infinite', {}); tutorial('infinite'); } };
     $('mGacha').onclick = renderGacha; $('mTeam').onclick = () => renderTeam();
     $('mGift').onclick = renderGift;
     $('mNews').onclick = () => renderNews(renderMenu);
@@ -497,7 +502,6 @@ const App = (() => {
     $('back').onclick = renderHalloween;
   }
   function startBoss() {
-    if (api.run && api.run.state !== 'over') return UI.toast(TX('Termina o abandona la partida en curso'));
     const T = savedTeam(), F = FORMATIONS[T.formation], pos = layout(F.roles), L = T.ids;
     if (L.some(x => x == null)) return UI.toast(TX('Completa tu equipo en Plantilla'));
     api.mode = 'hwboss';
@@ -809,7 +813,6 @@ const App = (() => {
     if (field && field !== 'normal') UI.toast(FIELD_LABEL[field] || '', 1600);
   }
   function startQuick() {
-    if (api.run && api.run.state !== 'over') return UI.toast(TX('Termina o abandona la partida en curso'));
     api.mode = 'quick';
     const T = savedTeam(), F = FORMATIONS[T.formation], pos = layout(F.roles), L = T.ids;
     if (L.some(x => x == null)) return UI.toast(TX('Completa tu equipo en Plantilla'));
@@ -1000,7 +1003,7 @@ const App = (() => {
       ${TX('Las técnicas, habilidades y fichajes temporales se pierden.')}</p>
       ${win && r.kind === 'story' ? (r.stage === 's4' ? '<p class="note"><b>' + TX('Desbloqueado:') + '</b> ' + TX('la cadena «El lado oscuro».') + '</p>' : r.stage === 's3' ? '<p class="note"><b>' + TX('Desbloqueado:') + '</b> ' + TX('la Fase 2 de la Etapa 3: el Mundial.') + '</p>' : r.stage === 's2' ? '<p class="note"><b>' + TX('Desbloqueado:') + '</b> ' + TX('el equipo especial Caos y la Etapa 3.') + '</p>' : '<p class="note"><b>' + TX('Desbloqueado:') + '</b> ' + TX('la Etapa 2, Cadenas, Infinito y nuevos equipos especiales.') + '</p>') : ''}
       <button class="cta" id="toGacha">${TX('Ir al gacha')}</button><button class="ghost" id="toMenu">${TX('Menú')}</button>`, win ? (r.kind === 'story' ? 'ill25' : 'ill27') : 'ill14');
-    const end = () => { Run.clear(); api.run = null; };
+    const end = () => { Run.clear(r.kind); api.run = null; };
     $('toGacha').onclick = () => { end(); renderGacha(); };
     $('toMenu').onclick = () => { end(); renderMenu(); };
   }
@@ -2336,7 +2339,6 @@ const App = (() => {
     if (!hostOk()) return renderCopy();
     Controls.apply();
     Career.load();
-    if (api.run && (!api.run.roster || !api.run.kind)) api.run = null;
     const pend = hashCode();
     const first = pend ? () => renderTransfer(renderMenu, pend) : renderMenu;
     const start = () => { if (settings.intro !== 0 && !pend) playIntro(first); else first(); };
