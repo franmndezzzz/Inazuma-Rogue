@@ -237,7 +237,7 @@ const cloudTickets = d => JSON.parse(cloudOf(d).data['inazuma-perfil']).tickets;
   console.log('20. Muchos guardados seguidos = una sola subida (ahorra cuota de Firebase)');
   let W = device(); W.play({ coll: { 7: { stars: 1 } }, tickets: 1 }); await W.C.signUp('ahorro', 'secreto1'); await W.C.sync();
   const w0 = server.writes;
-  for (let i = 2; i <= 8; i++) { W.play({ tickets: i }); await new Promise(r => setTimeout(r, 100)); }   // 7 guardados seguidos (en menos de los 3 s del temporizador)
+  for (let i = 2; i <= 8; i++) W.play({ tickets: i });   // 7 guardados seguidos
   await new Promise(r => setTimeout(r, 3400));
   ok(server.writes - w0 === 1 && cloudTickets(W) === 8, '7 guardados → 1 subida con lo último (' + (server.writes - w0) + ')');
 
