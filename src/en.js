@@ -741,6 +741,7 @@ const EN_TEXT = {
   'Partido jefe': 'Boss match',
   'Partido rápido': 'Quick match',
   'Partido, controles y sonido': 'Match, controls and sound',
+  'Partidos más equilibrados: con el balón se esprinta un poco menos y los rivales corren algo más cuando defienden. Ya no te escapas solo corriendo.': 'More balanced matches: you sprint a bit less with the ball and rivals run a bit more when defending. You can no longer escape just by running.',
   'Partidos · Inazuma Eleven': 'Matches · Inazuma Eleven',
   'Partidos · Inazuma Eleven 2': 'Matches · Inazuma Eleven 2',
   'Pase': 'Pass',

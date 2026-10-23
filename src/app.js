@@ -17,7 +17,7 @@ const stars = n => `<span class="stars">${'★'.repeat(n)}<s>${'★'.repeat(MAX_
 const TYPE_ICON = { tiro: '⚽', regate: '💨', bloqueo: '🛡️', parada: '✋' };
 const techLine = t => `<span class="tline">${chip(t.elem)}<b>${esc(t.name)}</b><i>${TYPE_LABEL[t.type] || ''} · ${t.power}</i></span>`;
 
-const VERSION = '0.31.11';
+const VERSION = '0.31.12';
 const DISCORD_URL = 'https://discord.gg/G6SyT2rZW', DISCORD_GIFT = 10;   // servidor de la comunidad (lo hizo un colega de Fran)
 const BETA = false;   // solo la beta privada (artefacto) lo pone a true: ahí está el modo desarrollador
 const App = (() => {
@@ -1961,6 +1961,8 @@ const App = (() => {
   }
   /* ---------- Novedades: notas de cada actualización (las más nuevas arriba) ---------- */
   const NEWS = [
+    { v: '0.31.12', date: '23/10/2026', items: [
+      TX('Partidos más equilibrados: con el balón se esprinta un poco menos y los rivales corren algo más cuando defienden. Ya no te escapas solo corriendo.')] },
     { v: '0.31.11', date: '23/10/2026', items: [
       TX('📱 Ajustes → Controles → «Colocar los botones a tu gusto»: en el móvil puedes mover cada botón a donde quieras y cambiar su tamaño.')] },
     { v: '0.31.10', date: '23/10/2026', items: [

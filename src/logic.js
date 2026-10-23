@@ -117,9 +117,11 @@ const Logic = (() => {
   }
 
   function speedOf(s, p, sprint) {
-    let v = p.speed;
-    if (s.ball.owner === p) v *= 0.93;
-    if (sprint && !p.tired && p.stamina > 0.02) { v *= 1.38; p.sprint = true; }
+    let v = p.speed; const own = s.ball.owner;
+    if (own === p) v *= 0.92;
+    // con el balón se esprinta algo menos (antes los tuyos se escapaban corriendo de todo el equipo rival)
+    if (sprint && !p.tired && p.stamina > 0.02) { v *= own === p ? 1.3 : 1.38; p.sprint = true; }
+    if (p.team === 'B' && own && own.team === 'A') v *= 1.05;   // la IA rival corre un poco más cuando defiende
     if (p.id === s.controlledId && s.shoot.charging) v *= 0.45;
     return v;
   }
