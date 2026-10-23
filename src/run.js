@@ -203,7 +203,7 @@ const DIFF_MUL = { facil: 1.08, medio: 1.13, dificil: 1.2 };   // fácil = el an
 /* ---------- Perfil permanente: colección, monedas, tickets ---------- */
 /* ---------- Códigos de regalo ----------
    Para añadir uno nuevo, copia una línea y cambia el código y el premio.
-   Premios posibles: tickets, coins (monedas), rayos. "hasta" es opcional (último día que funciona, AAAA-MM-DD). */
+   Premios posibles: tickets, coins (monedas), rayos. "hasta" es opcional (último día que funciona, AAAA-MM-DD). "uses": veces que se puede canjear (1 si no se pone). */
 /* Premios: tickets, coins (monedas), rayos, leg (próximas tiradas legendarias aseguradas), epica (próximas tiradas épicas o mejor),
    player (nombre completo de un jugador: se une a tu plantilla o sube una estrella). "desde" y "hasta" son opcionales (AAAA-MM-DD). */
 const GIFT_CODES = {
@@ -226,7 +226,7 @@ const GIFT_CODES = {
   MURALLA:           { pick: { rarity: 'epica', role: 'DEF' }, coins: 500, desc: TX('Elige 1 de 3 defensas épicos o mejores') },
   CEREBRO:           { pick: { rarity: 'epica', role: 'MED' }, coins: 500, desc: TX('Elige 1 de 3 medios épicos o mejores') },
   GOLEADOR:          { pick: { rarity: 'epica', role: 'DEL' }, coins: 500, desc: TX('Elige 1 de 3 delanteros épicos o mejores') },
-  INFINITO10:        { pick: { inf: true, n: 10 }, desc: TX('Elige 1 de 10 versiones del Infinito (con las probabilidades del gacha)') },
+  INFINITO10:        { pick: { inf: true, n: 10 }, uses: 2, desc: TX('Elige 1 de 10 versiones del Infinito (con las probabilidades del gacha)') },
   FUEGOSAGRADO:      { pick: { rarity: 'epica', elem: 'fuego' }, tickets: 5, desc: TX('Elige 1 de 3 jugadores de fuego épicos o mejores') },
   DISCORDINAZUMA:    { tickets: 15, rayos: 2, desc: TX('Regalo de la comunidad') },
   TICKETAZO:         { tickets: 50, desc: TX('Lluvia de tickets') },
@@ -292,7 +292,9 @@ const Profile = {
     const k = normCode(raw), G = GIFT_CODES[k];
     if (!k) return { ok: false, msg: TX('Escribe un código') };
     if (!G) return { ok: false, msg: TX('Ese código no existe') };
-    if (this.data.codes[k] || (G.also && this.data.codes[G.also])) return { ok: false, msg: TX('Ya canjeaste este código') };
+    // uses: cuántas veces se puede canjear cada código (1 si no se dice). P.codeUses cuenta las veces; los canjeados antes cuentan como 1
+    const used = (this.data.codeUses || {})[k] || (this.data.codes[k] ? 1 : 0);
+    if (used >= (G.uses || 1) || (G.also && this.data.codes[G.also])) return { ok: false, msg: TX('Ya canjeaste este código') };
     const today = new Date().toISOString().slice(0, 10);
     if (G.hasta && today > G.hasta) return { ok: false, msg: TX('Este código ha caducado') };
     if (G.desde && today < G.desde) return { ok: false, msg: TX('Este código todavía no está activo') };
@@ -306,7 +308,7 @@ const Profile = {
       if (pd) { const o = P.coll[pd.id]; if (!o) P.coll[pd.id] = { stars: 1, up: {} }; else if (o.stars < MAX_STARS) o.stars++; else P.coins += 200; who = pd; }
     }
     if (G.pick) { const opts = giftPickOptions(G.pick, G.pick.n || 3); if (opts.length) (P.giftPicks = P.giftPicks || []).push({ code: k, opts, desc: G.desc }); }
-    P.codes[k] = Date.now(); this.save();
+    P.codes[k] = Date.now(); P.codeUses = P.codeUses || {}; P.codeUses[k] = used + 1; this.save();
     const parts = [who && '⭐ ' + who.name, G.leg && TXn(G.leg, '{0} tirada legendaria', '{0} tiradas legendarias'), G.epica && G.epica + TX(' tiradas épicas o mejores'),
       G.pick && TX('elige 1 de {0} jugadores', G.pick.n || 3), G.tickets && G.tickets + TX(' 🎟️ tickets'), G.coins && G.coins + TX(' 🪙 monedas'), G.rayos && G.rayos + TX(' ⚡ Rayos')].filter(Boolean);
     return { ok: true, msg: TX('¡Código canjeado! ') + parts.join(TX(' y ')), code: k, gift: G };
