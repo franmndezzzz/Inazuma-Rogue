@@ -17,7 +17,7 @@ const stars = n => `<span class="stars">${'★'.repeat(n)}<s>${'★'.repeat(MAX_
 const TYPE_ICON = { tiro: '⚽', regate: '💨', bloqueo: '🛡️', parada: '✋' };
 const techLine = t => `<span class="tline">${chip(t.elem)}<b>${esc(t.name)}</b><i>${TYPE_LABEL[t.type] || ''} · ${t.power}</i></span>`;
 
-const VERSION = '0.31.9';
+const VERSION = '0.31.10';
 const DISCORD_URL = 'https://discord.gg/G6SyT2rZW', DISCORD_GIFT = 10;   // servidor de la comunidad (lo hizo un colega de Fran)
 const BETA = false;   // solo la beta privada (artefacto) lo pone a true: ahí está el modo desarrollador
 const App = (() => {
@@ -1958,6 +1958,9 @@ const App = (() => {
   }
   /* ---------- Novedades: notas de cada actualización (las más nuevas arriba) ---------- */
   const NEWS = [
+    { v: '0.31.10', date: '23/10/2026', items: [
+      TX('∞ Infinito: al ganar a cada jefe eliges 1 de 3 versiones especiales de jugadores que no salen en el gacha (del 2, del 3…). Cuanto más lejos llegues, más raras. Llevan su propio marco ∞.'),
+      TX('Porteros: salen a por el que entra con el balón en el área, y ya no se puede entrar andando con el balón en la portería. Para marcar, hay que chutar.')] },
     { v: '0.31.9', date: '23/10/2026', items: [
       TX('👕 ¡Crea tu equipación! En Plantilla → Mi equipo eliges los colores y el diseño (rayas, mitades, banda, cuadros…). En la Carrera también hay diseños nuevos.'),
       TX('🎨 Muñecos del Inazuma 3 arreglados: todos llevan su muñeco de verdad, sacado del juego original (peinado, colores y tono de piel), y ahora cambian a los colores de su equipo.'),

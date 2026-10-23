@@ -1419,6 +1419,7 @@ const EN_TEXT = {
   'Portero con balón: J pase · L saque largo · K despeje.': 'Keeper with the ball: J pass · L long kick · K clearance.',
   'Portero con balón: {0} pase · {1} saque largo · {2} despeje.': 'Goalkeeper with the ball: {0} pass · {1} long kick · {2} clearance.',
   'Portero+': 'Keeper+',
+  'Porteros: salen a por el que entra con el balón en el área, y ya no se puede entrar andando con el balón en la portería. Para marcar, hay que chutar.': 'Goalkeepers: they now rush whoever enters the box with the ball, and you can no longer walk the ball into the net. To score, you have to shoot.',
   'Practicar técnicas': 'Practise techniques',
   'Premio de hoy ya cobrado (puedes repetir)': 'Today\'s prize already claimed (you can replay)',
   'Premio del Mundial': 'World Cup prize',
@@ -1986,6 +1987,7 @@ const EN_TEXT = {
   'épicas ·': 'epic ·',
   '… pero si la fama llega a 0, cierran el club.': '… but if fame reaches 0, they close the club.',
   '∞ Al ganar a cada jefe eliges una versión especial de un jugador (del 2, del 3…) que no sale en el gacha: cuanto más lejos llegues, más rara.': '∞ Beat each boss to choose a special version of a player (from IE2, IE3…) that isn\'t in the gacha: the further you go, the rarer it gets.',
+  '∞ Infinito: al ganar a cada jefe eliges 1 de 3 versiones especiales de jugadores que no salen en el gacha (del 2, del 3…). Cuanto más lejos llegues, más raras. Llevan su propio marco ∞.': '∞ Endless: beat each boss to choose 1 of 3 special versions of players that aren\'t in the gacha (from IE2, IE3…). The further you go, the rarer they get. They have their own ∞ frame.',
   '⌨️ Ordenador': '⌨️ Computer',
   '▶ Ir a la web oficial': '▶ Go to the official website',
   '▶ Ver la intro': '▶ Watch the intro',
@@ -7380,7 +7382,7 @@ const stars = n => `<span class="stars">${'★'.repeat(n)}<s>${'★'.repeat(MAX_
 const TYPE_ICON = { tiro: '⚽', regate: '💨', bloqueo: '🛡️', parada: '✋' };
 const techLine = t => `<span class="tline">${chip(t.elem)}<b>${esc(t.name)}</b><i>${TYPE_LABEL[t.type] || ''} · ${t.power}</i></span>`;
 
-const VERSION = '0.31.9';
+const VERSION = '0.31.10';
 const DISCORD_URL = 'https://discord.gg/G6SyT2rZW', DISCORD_GIFT = 10;   // servidor de la comunidad (lo hizo un colega de Fran)
 const BETA = false;   // solo la beta privada (artefacto) lo pone a true: ahí está el modo desarrollador
 const App = (() => {
@@ -9321,6 +9323,9 @@ const App = (() => {
   }
   /* ---------- Novedades: notas de cada actualización (las más nuevas arriba) ---------- */
   const NEWS = [
+    { v: '0.31.10', date: '23/10/2026', items: [
+      TX('∞ Infinito: al ganar a cada jefe eliges 1 de 3 versiones especiales de jugadores que no salen en el gacha (del 2, del 3…). Cuanto más lejos llegues, más raras. Llevan su propio marco ∞.'),
+      TX('Porteros: salen a por el que entra con el balón en el área, y ya no se puede entrar andando con el balón en la portería. Para marcar, hay que chutar.')] },
     { v: '0.31.9', date: '23/10/2026', items: [
       TX('👕 ¡Crea tu equipación! En Plantilla → Mi equipo eliges los colores y el diseño (rayas, mitades, banda, cuadros…). En la Carrera también hay diseños nuevos.'),
       TX('🎨 Muñecos del Inazuma 3 arreglados: todos llevan su muñeco de verdad, sacado del juego original (peinado, colores y tono de piel), y ahora cambian a los colores de su equipo.'),
