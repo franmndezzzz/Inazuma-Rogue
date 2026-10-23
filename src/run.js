@@ -226,6 +226,12 @@ const GIFT_CODES = {
   MURALLA:           { pick: { rarity: 'epica', role: 'DEF' }, coins: 500, desc: TX('Elige 1 de 3 defensas épicos o mejores') },
   CEREBRO:           { pick: { rarity: 'epica', role: 'MED' }, coins: 500, desc: TX('Elige 1 de 3 medios épicos o mejores') },
   GOLEADOR:          { pick: { rarity: 'epica', role: 'DEL' }, coins: 500, desc: TX('Elige 1 de 3 delanteros épicos o mejores') },
+  KANEINFINITO:      { player: 21567, desc: TX('Hurley Kane (versión del Infinito)') },
+  LEANINFINITO:      { player: 1457, desc: TX('Lean (versión del Infinito)') },
+  TORCHINFINITO:     { player: 21460, desc: TX('Torch (versión del Infinito)') },
+  MERCURYINFINITO:   { player: 1415, desc: TX('Mercury (versión del Infinito)') },
+  AGENTEMINFINITO:   { player: 21487, desc: TX('Agente M (versión del Infinito)') },
+  NAKATAINFINITO:    { player: 31278, desc: TX('Hidetoshi Nakata (versión del Infinito)') },
   INFINITO10:        { pick: { inf: true, n: 10 }, uses: 2, desc: TX('Elige 1 de 10 versiones del Infinito (con las probabilidades del gacha)') },
   FUEGOSAGRADO:      { pick: { rarity: 'epica', elem: 'fuego' }, tickets: 5, desc: TX('Elige 1 de 3 jugadores de fuego épicos o mejores') },
   DISCORDINAZUMA:    { tickets: 15, rayos: 2, desc: TX('Regalo de la comunidad') },
@@ -306,7 +312,7 @@ const Profile = {
     if (G.epica) P.giftEpic = (P.giftEpic || 0) + G.epica;
     let who = null;
     if (G.player) {
-      const pd = GAME.players.find(p => (p.gacha !== false || p.special) && p.cs && (p.full === G.player || p.name === G.player));
+      const pd = typeof G.player === 'number' ? PLAYER(G.player) : GAME.players.find(p => (p.gacha !== false || p.special) && p.cs && (p.full === G.player || p.name === G.player));   // número = id exacto (p. ej. una versión del Infinito)
       if (pd) { const o = P.coll[pd.id]; if (!o) P.coll[pd.id] = { stars: 1, up: {} }; else if (o.stars < MAX_STARS) o.stars++; else P.coins += 200; who = pd; }
     }
     if (G.pick) { const opts = giftPickOptions(G.pick, G.pick.n || 3); if (opts.length) (P.giftPicks = P.giftPicks || []).push({ code: k, opts, desc: G.desc }); }
