@@ -226,6 +226,7 @@ const GIFT_CODES = {
   MURALLA:           { pick: { rarity: 'epica', role: 'DEF' }, coins: 500, desc: TX('Elige 1 de 3 defensas épicos o mejores') },
   CEREBRO:           { pick: { rarity: 'epica', role: 'MED' }, coins: 500, desc: TX('Elige 1 de 3 medios épicos o mejores') },
   GOLEADOR:          { pick: { rarity: 'epica', role: 'DEL' }, coins: 500, desc: TX('Elige 1 de 3 delanteros épicos o mejores') },
+  INFINITO10:        { pick: { inf: true, n: 10 }, desc: TX('Elige 1 de 10 versiones del Infinito (con las probabilidades del gacha)') },
   FUEGOSAGRADO:      { pick: { rarity: 'epica', elem: 'fuego' }, tickets: 5, desc: TX('Elige 1 de 3 jugadores de fuego épicos o mejores') },
   DISCORDINAZUMA:    { tickets: 15, rayos: 2, desc: TX('Regalo de la comunidad') },
   TICKETAZO:         { tickets: 50, desc: TX('Lluvia de tickets') },
@@ -234,10 +235,22 @@ const GIFT_CODES = {
 const PICK_TIERS = { comun: 0, rara: 1, epica: 2, legendaria: 3 };
 // Las 3 opciones de un "elige 1 de 3": jugadores del gacha (sin versiones de evento ni originales)
 function giftPickOptions(f, n = 3) {
+  if (f.inf) return infPickOptions(f.n || n);
   const avg = pd => ['tiro', 'control', 'defensa', 'rapidez', 'fisico'].reduce((t, k) => t + pd.ie[k], 0) / 5;
   const pool = GAME.players.filter(p => p.cs && p.gacha !== false && !p.halloween && !p.original && !p.special
     && PICK_TIERS[p.rarity] >= PICK_TIERS[f.rarity || 'comun'] && (!f.role || p.role === f.role) && (!f.elem || p.elem === f.elem) && (!f.min || avg(p) >= f.min)).map(p => p.id);
   const out = []; while (out.length < n && pool.length) out.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
+  return out;
+}
+// «Elige 1 de N» de versiones del Infinito: cada opción sale con las probabilidades del gacha (común 60 %, rara 28 %, épica 10 %, legendaria 2 %); sin repetir
+function infPickOptions(n) {
+  const all = GAME.players.filter(p => p.inf), out = [];
+  for (let k = 0; k < n * 20 && out.length < n; k++) {
+    let r = Math.random() * 100, tier = 'comun';
+    for (const t of ['legendaria', 'epica', 'rara', 'comun']) { if (r < RARITY[t].rate) { tier = t; break; } r -= RARITY[t].rate; }
+    const pool = all.filter(p => p.rarity === tier && !out.includes(p.id)); if (!pool.length) continue;
+    out.push(pool[Math.floor(Math.random() * pool.length)].id);
+  }
   return out;
 }
 // Versiones del Infinito: las otras versiones de jugadores (del 2, del 3, nombres alienígenas…) que no salen en el gacha.
@@ -292,10 +305,10 @@ const Profile = {
       const pd = GAME.players.find(p => (p.gacha !== false || p.special) && p.cs && (p.full === G.player || p.name === G.player));
       if (pd) { const o = P.coll[pd.id]; if (!o) P.coll[pd.id] = { stars: 1, up: {} }; else if (o.stars < MAX_STARS) o.stars++; else P.coins += 200; who = pd; }
     }
-    if (G.pick) { const opts = giftPickOptions(G.pick); if (opts.length) (P.giftPicks = P.giftPicks || []).push({ code: k, opts, desc: G.desc }); }
+    if (G.pick) { const opts = giftPickOptions(G.pick, G.pick.n || 3); if (opts.length) (P.giftPicks = P.giftPicks || []).push({ code: k, opts, desc: G.desc }); }
     P.codes[k] = Date.now(); this.save();
     const parts = [who && '⭐ ' + who.name, G.leg && TXn(G.leg, '{0} tirada legendaria', '{0} tiradas legendarias'), G.epica && G.epica + TX(' tiradas épicas o mejores'),
-      G.pick && TX('elige 1 de 3 jugadores'), G.tickets && G.tickets + TX(' 🎟️ tickets'), G.coins && G.coins + TX(' 🪙 monedas'), G.rayos && G.rayos + TX(' ⚡ Rayos')].filter(Boolean);
+      G.pick && TX('elige 1 de {0} jugadores', G.pick.n || 3), G.tickets && G.tickets + TX(' 🎟️ tickets'), G.coins && G.coins + TX(' 🪙 monedas'), G.rayos && G.rayos + TX(' ⚡ Rayos')].filter(Boolean);
     return { ok: true, msg: TX('¡Código canjeado! ') + parts.join(TX(' y ')), code: k, gift: G };
   },
   // Resuelve un "elige 1 de 3" pendiente: nuevo, una estrella más o monedas si ya está al máximo
