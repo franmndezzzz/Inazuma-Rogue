@@ -17,7 +17,7 @@ const stars = n => `<span class="stars">${'★'.repeat(n)}<s>${'★'.repeat(MAX_
 const TYPE_ICON = { tiro: '⚽', regate: '💨', bloqueo: '🛡️', parada: '✋' };
 const techLine = t => `<span class="tline">${chip(t.elem)}<b>${esc(t.name)}</b><i>${TYPE_LABEL[t.type] || ''} · ${t.power}</i></span>`;
 
-const VERSION = '0.31.12';
+const VERSION = '0.31.13';
 const DISCORD_URL = 'https://discord.gg/G6SyT2rZW', DISCORD_GIFT = 10;   // servidor de la comunidad (lo hizo un colega de Fran)
 const BETA = false;   // solo la beta privada (artefacto) lo pone a true: ahí está el modo desarrollador
 const App = (() => {
@@ -79,6 +79,29 @@ const App = (() => {
   document.addEventListener('pointerdown', () => Sound.unlock(), { capture: true });
 
   /* ---------- Menú principal: modos ---------- */
+  // Botón «en directo»: DecAPI (servicio público, sin claves) dice si el canal de Twitch de Fran está emitiendo.
+  // Se mira al abrir el menú (como mucho cada ~3 min) y cada 3 min con la página a la vista. Si falla, simplemente no sale.
+  const TWITCH = 'franmen_';
+  const Live = { on: false, at: 0, busy: false,
+    async check(force) {
+      if (this.busy || typeof fetch === 'undefined' || (!force && Date.now() - this.at < 170000)) return;
+      this.busy = true; this.at = Date.now();
+      let tm = null;
+      try {
+        const ctl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+        if (ctl) tm = setTimeout(() => ctl.abort(), 6000);
+        const r = await fetch('https://decapi.me/twitch/uptime/' + TWITCH + '?t=' + Date.now(), { cache: 'no-store', signal: ctl ? ctl.signal : undefined });
+        const t = r.ok ? (await r.text()).trim() : '';
+        const on = !!t && t.length < 120 && /\d/.test(t) && !/offline|error|not found|no user|invalid/i.test(t);   // en directo: «1 hour, 5 minutes»
+        if (on !== this.on) { this.on = on; this.paint(); }
+      } catch (_) {} finally { clearTimeout(tm); this.busy = false; }
+    },
+    paint() {
+      const el = $('liveSlot'); if (!el) return;
+      el.innerHTML = this.on ? `<a class="livebtn" href="https://www.twitch.tv/${TWITCH}" target="_blank" rel="noopener"><i class="livedot"></i><span class="mt"><b>${TX('Franmen está en directo')}</b><small>${TX('Toca para verlo en Twitch')}</small></span><span class="livego">▶</span></a>` : '';
+    },
+  };
+  setInterval(() => { if (!document.hidden && $('liveSlot')) Live.check(); }, 180000);
   function renderMenu() {
     if (!Profile.data.firstDone) return renderWelcome();
     if (Cloud.state.conflict) return renderConflict(renderMenu);
@@ -87,6 +110,7 @@ const App = (() => {
     const P = Profile.data, runs = Run.all(), RUN_ORDER = ['story', 'special', 'chain', 'infinite'], open = RUN_ORDER.filter(k => runs[k]).map(k => runs[k]);
     const done = P.story.s1.done;
     screen(`<div class="title"><img class="logo" id="logo" src="ui/logo_rogue.png" alt="Inazuma Rogue"><span>${TX('5 contra 5 · roguelite')}</span></div>${wallet()}
+      <div id="liveSlot"></div>
       ${Halloween.active() ? hwMenuBtn() : ''}
       ${open.map(r => `<button class="cta" data-cont="${r.kind}">${TX('Continuar:')} ${esc(r.name)}<small>${TX('Partido')} ${r.index + 1}${r.kind === 'infinite' ? '' : TX(' de ') + r.schedule.length} · ${'♥'.repeat(r.lives)}</small></button>`).join('')}
       <div class="modes">
@@ -142,6 +166,7 @@ const App = (() => {
     body.querySelector('[data-cloudline]').onclick = () => renderAccount(renderMenu);
     $('mQuick').onclick = startQuick; $('mSound').onclick = renderSettings;
     if ($('mHw')) { $('mHw').onclick = renderHalloween; hwDecor(); }
+    Live.paint(); Live.check();
     if (settings.seenNews === VERSION || settings.newsShown === VERSION) setTimeout(aviso, 500);
     Sound.music('menu');
   }
@@ -1961,6 +1986,8 @@ const App = (() => {
   }
   /* ---------- Novedades: notas de cada actualización (las más nuevas arriba) ---------- */
   const NEWS = [
+    { v: '0.31.13', date: '24/10/2026', items: [
+      TX('🔴 Cuando Franmen está en directo en Twitch, sale un botón arriba en el menú para ir a verlo.')] },
     { v: '0.31.12', date: '23/10/2026', items: [
       TX('Partidos más equilibrados: con el balón se esprinta un poco menos y los rivales corren algo más cuando defienden. Ya no te escapas solo corriendo.')] },
     { v: '0.31.11', date: '23/10/2026', items: [

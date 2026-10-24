@@ -314,6 +314,10 @@ select option{color:#111;font-family:system-ui}
 .cmgr small{font-size:10px;color:#ffb44a}.cmgr.ray{background:rgba(40,10,40,.75)}.cmgr img.mgrcrest{width:64px;height:64px;image-rendering:pixelated}
 .chead img.mgrcrest{width:40px;height:40px}
 /* ---------- Halloween ---------- */
+.livebtn{display:flex;align-items:center;gap:12px;margin:0 0 10px;padding:10px 14px;border-radius:10px;text-decoration:none;color:#fff;background:linear-gradient(90deg,#6b2bd9,#9146ff);box-shadow:0 0 0 2px #c9a8ff,0 0 16px rgba(145,70,255,.55);animation:livepulse 2.4s ease-in-out infinite}
+.livebtn .mt{flex:1;display:flex;flex-direction:column;text-align:left}.livebtn b{font-size:17px;color:#fff}.livebtn small{opacity:.85}
+.livebtn .livego{font-size:20px}.livedot{width:12px;height:12px;border-radius:50%;background:#ff3b3b;box-shadow:0 0 8px #ff3b3b;animation:liveblink 1.2s steps(2) infinite;flex:none}
+@keyframes liveblink{50%{opacity:.25}}@keyframes livepulse{50%{box-shadow:0 0 0 2px #e2d1ff,0 0 26px rgba(145,70,255,.8)}}
 .mode.hwmode{background:linear-gradient(90deg,#3a1458,#5a1f2a);box-shadow:0 0 0 2px #ff8a1a,0 0 14px rgba(255,138,26,.35)}
 .mode.hwmode b{color:#ffa23a}
 .hwdot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#ff5a2a;box-shadow:0 0 6px #ff8a1a;vertical-align:middle;margin-left:4px}
