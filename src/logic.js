@@ -781,8 +781,22 @@ const Logic = (() => {
       const opp = s.players.filter(q => q.team !== p.team).reduce((m, q) => Math.min(m, dist(q, b)), 99);
       if (dist(p, b) < opp) { moveTo(s, p, b.x, b.y, true); return; }
     }
-    // Un rival se mete con el balón en el área: el portero sale a por él
-    if (b.owner && b.owner.team !== p.team && inOwnBox(p.team, b.owner) && dist(p, b.owner) < 5) { moveTo(s, p, b.owner.x, b.owner.y, true); return; }
+    // Un rival se mete con el balón en el área: el portero sale a por él… pero si hay otro atacante libre para el pase
+    // de la muerte, no se lanza hasta tenerlo encima (antes salía siempre, el atacante la pasaba y gol a puerta vacía)
+    const carrier = b.owner && b.owner.team !== p.team ? b.owner : null;
+    if (carrier && inOwnBox(p.team, carrier)) {
+      const mate = s.players.some(q => q.team === carrier.team && q !== carrier && q.role !== 'POR' && depthOf(p.team, q.y) < 12 &&
+        dist(q, carrier) < 12 && laneBlock(s, carrier, q.x, q.y, 0.9, true) === 0);
+      if (dist(p, carrier) < (mate ? 2.2 : 5)) { moveTo(s, p, carrier.x, carrier.y, true); return; }
+    }
+    // Pase del rival cerca del área: vuelve a toda prisa a tapar la portería mirando a donde va el balón
+    const sp = Math.hypot(b.vx, b.vy);
+    if (!b.owner && b.lastTeam !== p.team && sp > 4 && depthOf(p.team, b.y) < 16) {
+      const fx = b.x + b.vx * 0.3, tx = cx + clamp((fx - cx) * 0.45, -half + 0.3, half - 0.3), ty = homeY + attackDir(p.team) * 0.5;
+      const dx = tx - p.x, dy = ty - p.y, d = Math.hypot(dx, dy);
+      if (d > 0.2) { const v = Math.min(speedOf(s, p, true) * 1.15, d / Math.max(dt, 0.001)); p.dvx = dx / d * v; p.dvy = dy / d * v; } else p.dvx = p.dvy = 0;
+      return;
+    }
     // Cubre el ángulo: se pone entre el balón y el centro de la portería y sale un poco si el balón se acerca
     const bd = depthOf(p.team, b.y), out = clamp((14 - bd) * 0.12, 0, 1.4);
     moveTo(s, p, cx + clamp((b.x - cx) * 0.42, -half + 0.3, half - 0.3), homeY + attackDir(p.team) * out, false);

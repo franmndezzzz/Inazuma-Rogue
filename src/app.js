@@ -17,7 +17,7 @@ const stars = n => `<span class="stars">${'★'.repeat(n)}<s>${'★'.repeat(MAX_
 const TYPE_ICON = { tiro: '⚽', regate: '💨', bloqueo: '🛡️', parada: '✋' };
 const techLine = t => `<span class="tline">${chip(t.elem)}<b>${esc(t.name)}</b><i>${TYPE_LABEL[t.type] || ''} · ${t.power}</i></span>`;
 
-const VERSION = '0.31.13';
+const VERSION = '0.31.14';
 const DISCORD_URL = 'https://discord.gg/G6SyT2rZW', DISCORD_GIFT = 10;   // servidor de la comunidad (lo hizo un colega de Fran)
 const BETA = false;   // solo la beta privada (artefacto) lo pone a true: ahí está el modo desarrollador
 const App = (() => {
@@ -1986,6 +1986,8 @@ const App = (() => {
   }
   /* ---------- Novedades: notas de cada actualización (las más nuevas arriba) ---------- */
   const NEWS = [
+    { v: '0.31.14', date: '24/10/2026', items: [
+      TX('🧤 Porteros más listos: si hay otro atacante libre para el pase, no salen a lo loco, y cuando el rival pasa vuelven corriendo a tapar la portería.')] },
     { v: '0.31.13', date: '24/10/2026', items: [
       TX('🔴 Cuando Franmen está en directo en Twitch, sale un botón arriba en el menú para ir a verlo.')] },
     { v: '0.31.12', date: '23/10/2026', items: [

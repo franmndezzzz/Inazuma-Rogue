@@ -1458,6 +1458,7 @@ const EN_TEXT = {
   '🛠 Modo desarrollador': '🛠 Developer mode',
   '🥉 1 vez · 🥈 3 veces · 🥇 5 veces (15 🎟️ y otro Rayo).': '🥉 1 time · 🥈 3 times · 🥇 5 times (15 🎟️ and another Bolt).',
   '🧤 Parada de': '🧤 Save by',
+  '🧤 Porteros más listos: si hay otro atacante libre para el pase, no salen a lo loco, y cuando el rival pasa vuelven corriendo a tapar la portería.': '🧤 Smarter goalkeepers: if another attacker is free for the pass, they don\'t rush out blindly, and when the opponent passes they sprint back to cover the goal.',
 };
 I18N.applyData();
 // Textos fijos del HTML (marcados con data-tx / data-tx-aria)
